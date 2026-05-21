@@ -19,6 +19,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Feather } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/src/api/client';
+import BulkUploadModal from '@/components/BulkUploadModal';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -231,6 +232,7 @@ export default function AdminProjectsScreen() {
 
   const [view, setView] = useState<ScreenView>('list');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [statusModal, setStatusModal] = useState<Unit | null>(null);
   const [pendingStatus, setPendingStatus] = useState<UnitStatus>('Available');
   const [reason, setReason] = useState('');
@@ -869,8 +871,18 @@ export default function AdminProjectsScreen() {
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <View style={s.pageHeader}>
-        <Text style={s.pageTitle}>Projects</Text>
-        <Text style={s.pageCount}>{projects.length} total</Text>
+        <View>
+          <Text style={s.pageTitle}>Projects</Text>
+          <Text style={s.pageCount}>{projects.length} total</Text>
+        </View>
+        <TouchableOpacity
+          style={s.bulkBtn}
+          onPress={() => setShowBulkUpload(true)}
+          activeOpacity={0.8}
+        >
+          <Feather name="upload" size={14} color={GREEN} />
+          <Text style={s.bulkBtnText}>Bulk Upload</Text>
+        </TouchableOpacity>
       </View>
 
       {projectsQuery.isLoading ? (
@@ -933,6 +945,8 @@ export default function AdminProjectsScreen() {
       <TouchableOpacity style={[s.fab, { bottom: insets.bottom + 24 }]} onPress={() => setView('create')} activeOpacity={0.85}>
         <Feather name="plus" size={24} color="#fff" />
       </TouchableOpacity>
+
+      <BulkUploadModal visible={showBulkUpload} onClose={() => setShowBulkUpload(false)} />
     </SafeAreaView>
   );
 }
@@ -1027,7 +1041,13 @@ const s = StyleSheet.create({
     width: 36, height: 36, borderRadius: 12,
     backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center',
   },
-  pageTitle: { flex: 1, fontSize: 20, fontWeight: '900', color: '#0a0f1c' },
+  pageTitle: { fontSize: 20, fontWeight: '900', color: '#0a0f1c' },
+  bulkBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    borderWidth: 1.5, borderColor: GREEN, borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 7,
+  },
+  bulkBtnText: { fontSize: 12, fontWeight: '700', color: GREEN },
   pageSubtitle: { flex: 1, fontSize: 12, color: '#94a3b8', marginTop: 1 },
   saveHeaderBtn: {
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10, backgroundColor: GREEN,
