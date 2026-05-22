@@ -13,7 +13,7 @@ interface OwnerReports {
   bookedUnits: number; agentPerformance: AgentPerf[];
 }
 
-const GREEN = '#066a46';
+const GREEN = '#1e3c6e';
 const AMBER = '#f59e0b';
 const ORANGE = '#ea580c';
 

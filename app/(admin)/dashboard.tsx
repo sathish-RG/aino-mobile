@@ -5,6 +5,7 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -25,14 +26,11 @@ interface DashboardStats {
   totalRevenue: number;
 }
 
-const GREEN = '#066a46';
+const GREEN = '#1e3c6e';
 
 const formatINR = (n: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
-function getInitials(name: string) {
-  return name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
-}
 
 function MetricCard({
   title, value, sub, icon, color,
@@ -72,9 +70,11 @@ export default function AdminDashboard() {
             <Text style={s.bannerName}>{user?.name ?? 'Admin'}</Text>
             <Text style={s.bannerSub}>Platform overview</Text>
           </View>
-          <View style={s.bannerAvatar}>
-            <Text style={s.bannerAvatarText}>{getInitials(user?.name ?? 'A')}</Text>
-          </View>
+          <Image
+            source={require('@/assets/images/aino-logo.png')}
+            style={s.bannerLogo}
+            resizeMode="contain"
+          />
         </View>
 
         {isLoading && (
@@ -178,17 +178,7 @@ const s = StyleSheet.create({
   },
   bannerName: { fontSize: 24, fontWeight: '900', color: '#fff', marginBottom: 2 },
   bannerSub: { fontSize: 13, color: 'rgba(255,255,255,0.65)' },
-  bannerAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.35)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bannerAvatarText: { fontSize: 20, fontWeight: '800', color: '#fff' },
+  bannerLogo: { width: 72, height: 72 },
   center: { paddingVertical: 60, alignItems: 'center' },
   errorBanner: {
     flexDirection: 'row',

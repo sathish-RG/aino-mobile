@@ -1,9 +1,13 @@
 import { useEffect } from 'react';
+import { View, Image, StyleSheet } from 'react-native';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '@/src/stores/useAuthStore';
 import type { UserRole } from '@/src/stores/useAuthStore';
+
+SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -48,9 +52,22 @@ function AuthGate() {
     }
   }, [user, isLoaded, segments]);
 
-  // Block rendering until storage is read — prevents React Query from firing
-  // before the access token is restored (page-reload race condition).
-  if (!isLoaded) return null;
+  useEffect(() => {
+    if (isLoaded) SplashScreen.hideAsync();
+  }, [isLoaded]);
+
+  // Show branded splash while auth state is being restored from storage.
+  if (!isLoaded) {
+    return (
+      <View style={splash.screen}>
+        <Image
+          source={require('@/assets/images/aino-logo.png')}
+          style={splash.logo}
+          resizeMode="contain"
+        />
+      </View>
+    );
+  }
 
   return <Slot />;
 }
@@ -58,8 +75,18 @@ function AuthGate() {
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <AuthGate />
     </QueryClientProvider>
   );
 }
+
+const splash = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#1e3c6e',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logo: { width: 220, height: 220 },
+});

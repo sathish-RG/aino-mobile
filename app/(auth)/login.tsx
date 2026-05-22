@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -21,7 +22,7 @@ import 'firebase/compat/auth';
 import { app } from '@/config/firebase';
 import { setConfirmation } from '@/src/lib/phoneAuth';
 
-const GREEN = '#066a46';
+const GREEN = '#1e3c6e';
 const SCREEN_H = Dimensions.get('window').height;
 
 export default function LoginScreen() {
@@ -32,17 +33,16 @@ export default function LoginScreen() {
   const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModal>(null);
 
   const handleSendOtp = async () => {
-    const trimmed = phone.trim();
-    if (!trimmed) return Alert.alert('Required', 'Enter your phone number.');
-    if (!trimmed.startsWith('+'))
-      return Alert.alert('Invalid format', 'Include country code, e.g. +91XXXXXXXXXX');
+    const digits = phone.trim();
+    if (!digits) return Alert.alert('Required', 'Enter your phone number.');
+    const fullPhone = '+91' + digits;
     try {
       setLoading(true);
       const result = await firebase
         .auth()
-        .signInWithPhoneNumber(trimmed, recaptchaVerifier.current!);
+        .signInWithPhoneNumber(fullPhone, recaptchaVerifier.current!);
       setConfirmation(result);
-      router.push({ pathname: '/(auth)/otp' as any, params: { phone: trimmed } });
+      router.push({ pathname: '/(auth)/otp' as any, params: { phone: fullPhone } });
     } catch (err: any) {
       Alert.alert('Failed', err.message ?? 'Could not send OTP. Try again.');
     } finally {
@@ -69,11 +69,13 @@ export default function LoginScreen() {
         >
           {/* ── Hero ── */}
           <View style={s.hero}>
-            <View style={s.logoMark}>
-              <Text style={s.logoLetter}>A</Text>
+            <View style={s.logoCard}>
+              <Image
+                source={require('@/assets/images/aino-logo.png')}
+                style={s.logoImage}
+                resizeMode="contain"
+              />
             </View>
-            <Text style={s.logoText}>AINO</Text>
-            <Text style={s.tagline}>Premium Real Estate Platform</Text>
           </View>
 
           {/* ── Form card ── */}
@@ -86,13 +88,15 @@ export default function LoginScreen() {
               <View style={s.inputIcon}>
                 <Feather name="phone" size={16} color={focused ? GREEN : '#94a3b8'} />
               </View>
+              <Text style={s.dialCode}>+91</Text>
+              <View style={s.dialDiv} />
               <TextInput
                 style={s.input}
-                placeholder="+91 XXXXX XXXXX"
+                placeholder="XXXXX XXXXX"
                 placeholderTextColor="#94a3b8"
                 keyboardType="phone-pad"
                 value={phone}
-                onChangeText={setPhone}
+                onChangeText={(v) => setPhone(v.replace(/\D/g, '').slice(0, 10))}
                 onFocus={() => setFocused(true)}
                 onBlur={() => setFocused(false)}
                 returnKeyType="done"
@@ -148,20 +152,23 @@ const s = StyleSheet.create({
     paddingBottom: 48,
     paddingHorizontal: 24,
   },
-  logoMark: {
-    width: 76,
-    height: 76,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.35)',
+  logoCard: {
+    width: 180,
+    height: 180,
+    borderRadius: 36,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 12,
   },
-  logoLetter: { fontSize: 38, fontWeight: '900', color: '#fff' },
-  logoText: { fontSize: 34, fontWeight: '900', color: '#fff', letterSpacing: 8, marginBottom: 8 },
-  tagline: { fontSize: 13, color: 'rgba(255,255,255,0.68)', letterSpacing: 0.5 },
+  logoImage: {
+    width: 148,
+    height: 148,
+  },
   card: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 36,
@@ -194,6 +201,8 @@ const s = StyleSheet.create({
     borderRightColor: '#e2e8f0',
     height: '100%',
   },
+  dialCode: { paddingHorizontal: 10, fontSize: 15, fontWeight: '700', color: '#0a0f1c' },
+  dialDiv: { width: 1, height: 28, backgroundColor: '#e2e8f0' },
   input: { flex: 1, paddingHorizontal: 14, fontSize: 16, color: '#0a0f1c', fontWeight: '500' },
   btn: {
     height: 58,

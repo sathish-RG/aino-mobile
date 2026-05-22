@@ -6,6 +6,8 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Image,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -13,13 +15,13 @@ import { useState } from 'react';
 import { useAuthStore } from '@/src/stores/useAuthStore';
 import api from '@/src/api/client';
 
-const GREEN = '#066a46';
+const GREEN = '#1e3c6e';
 const RED = '#dc2626';
 
 const ROLE_COLOR: Record<string, string> = {
-  Admin: '#7c3aed',
-  Agent: '#0284c7',
-  Owner: '#ea580c',
+  Admin: '#1e3c6e',
+  Agent: '#1e3c6e',
+  Owner: '#7a2030',
 };
 
 const ROLE_LABEL: Record<string, string> = {
@@ -28,9 +30,6 @@ const ROLE_LABEL: Record<string, string> = {
   Owner: 'PROPERTY OWNER',
 };
 
-function getInitials(name: string): string {
-  return name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
-}
 
 function MenuItem({
   icon, label, onPress, loading, destructive,
@@ -72,62 +71,71 @@ export default function ProfileScreen() {
   const roleColor = user ? (ROLE_COLOR[user.role] ?? GREEN) : GREEN;
   const roleLabel = user ? (ROLE_LABEL[user.role] ?? user.role.toUpperCase()) : '';
 
+  const doLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // clear local state regardless
+    } finally {
+      await logout();
+      setLoggingOut(false);
+    }
+  };
+
   const handleLogout = () => {
-    Alert.alert('Log out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log out',
-        style: 'destructive',
-        onPress: async () => {
-          setLoggingOut(true);
-          try {
-            await api.post('/auth/logout');
-          } catch {
-            // clear local state regardless
-          } finally {
-            await logout();
-            setLoggingOut(false);
-          }
-        },
-      },
-    ]);
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to log out?')) doLogout();
+    } else {
+      Alert.alert('Log out', 'Are you sure you want to log out?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Log out', style: 'destructive', onPress: doLogout },
+      ]);
+    }
+  };
+
+  const doDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await api.delete('/auth/account');
+      await logout();
+    } catch (err: any) {
+      setDeleting(false);
+      if (Platform.OS === 'web') {
+        window.alert(err.response?.data?.message ?? 'Could not delete account. Try again.');
+      } else {
+        Alert.alert('Error', err.response?.data?.message ?? 'Could not delete account. Try again.');
+      }
+    }
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'This will permanently delete your account and all associated data. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Are you absolutely sure?',
-              `Your account for ${user?.phone} will be permanently deleted.`,
-              [
-                { text: 'No, keep it', style: 'cancel' },
-                {
-                  text: 'Yes, delete',
-                  style: 'destructive',
-                  onPress: async () => {
-                    setDeleting(true);
-                    try {
-                      await api.delete('/auth/account');
-                      await logout();
-                    } catch (err: any) {
-                      setDeleting(false);
-                      Alert.alert('Error', err.response?.data?.message ?? 'Could not delete account. Try again.');
-                    }
-                  },
-                },
-              ],
-            );
+    if (Platform.OS === 'web') {
+      if (window.confirm('This will permanently delete your account and all associated data. This cannot be undone.\n\nAre you absolutely sure?')) {
+        doDeleteAccount();
+      }
+    } else {
+      Alert.alert(
+        'Delete Account',
+        'This will permanently delete your account and all associated data. This cannot be undone.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () =>
+              Alert.alert(
+                'Are you absolutely sure?',
+                `Your account for ${user?.phone} will be permanently deleted.`,
+                [
+                  { text: 'No, keep it', style: 'cancel' },
+                  { text: 'Yes, delete', style: 'destructive', onPress: doDeleteAccount },
+                ],
+              ),
           },
-        },
-      ],
-    );
+        ],
+      );
+    }
   };
 
   if (!user) return null;
@@ -141,11 +149,11 @@ export default function ProfileScreen() {
       >
         {/* ── Hero banner ── */}
         <View style={[s.hero, { backgroundColor: roleColor }]}>
-          <View style={s.avatarWrap}>
-            <View style={s.avatarRing}>
-              <Text style={s.avatarText}>{getInitials(user.name)}</Text>
-            </View>
-          </View>
+          <Image
+            source={require('@/assets/images/aino-logo.png')}
+            style={s.heroLogo}
+            resizeMode="contain"
+          />
           <Text style={s.heroRole}>{roleLabel}</Text>
           <Text style={s.heroName}>{user.name}</Text>
           <View style={s.heroPill}>
@@ -225,14 +233,7 @@ const s = StyleSheet.create({
     paddingBottom: 40,
     paddingHorizontal: 24,
   },
-  avatarWrap: { marginBottom: 16 },
-  avatarRing: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    borderWidth: 2.5, borderColor: 'rgba(255,255,255,0.4)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  avatarText: { fontSize: 30, fontWeight: '900', color: '#fff' },
+  heroLogo: { width: 80, height: 80, marginBottom: 16 },
   heroRole: { fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.65)', letterSpacing: 1.5, marginBottom: 6 },
   heroName: { fontSize: 26, fontWeight: '900', color: '#fff', marginBottom: 12 },
   heroPill: {

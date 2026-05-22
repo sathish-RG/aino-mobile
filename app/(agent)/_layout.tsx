@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
-const GREEN = '#066a46';
+const GREEN = '#1e3c6e';
 
 export default function AgentLayout() {
   return (

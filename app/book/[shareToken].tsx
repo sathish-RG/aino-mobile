@@ -173,13 +173,10 @@ export default function BookScreen() {
     if (!selectedUnit || !data) return;
 
     const name = customerName.trim();
-    const phone = customerPhone.trim();
+    const digits = customerPhone.trim();
 
     if (!name) return Alert.alert('Required', 'Please enter your name.');
-    if (!phone) return Alert.alert('Required', 'Please enter your phone number.');
-    if (!phone.startsWith('+')) {
-      return Alert.alert('Invalid phone', 'Include country code, e.g. +91XXXXXXXXXX');
-    }
+    if (!digits) return Alert.alert('Required', 'Please enter your phone number.');
 
     try {
       setBooking(true);
@@ -187,7 +184,7 @@ export default function BookScreen() {
         unitId: selectedUnit.id,
         agentId: data.agentId,
         customerName: name,
-        customerPhone: phone,
+        customerPhone: '+91' + digits,
         shareToken,
       });
       setBookedUnit(selectedUnit);
@@ -205,7 +202,7 @@ export default function BookScreen() {
     return (
       <SafeAreaView style={s.safe}>
         <View style={s.center}>
-          <ActivityIndicator size="large" color="#066a46" />
+          <ActivityIndicator size="large" color="#1e3c6e" />
           <Text style={s.loadingText}>Loading project details…</Text>
         </View>
       </SafeAreaView>
@@ -331,13 +328,15 @@ export default function BookScreen() {
               <Text style={s.fieldLabel}>PHONE NUMBER</Text>
               <View style={s.fieldRow}>
                 <Feather name="phone" size={16} color="#a0aabf" style={s.fieldIcon} />
+                <Text style={s.dialCode}>+91</Text>
+                <View style={s.dialDiv} />
                 <TextInput
                   style={s.fieldInput}
-                  placeholder="+91XXXXXXXXXX"
+                  placeholder="XXXXX XXXXX"
                   placeholderTextColor="#a0aabf"
                   keyboardType="phone-pad"
                   value={customerPhone}
-                  onChangeText={setCustomerPhone}
+                  onChangeText={(v) => setCustomerPhone(v.replace(/\D/g, '').slice(0, 10))}
                   editable={!booking}
                 />
               </View>
@@ -375,7 +374,7 @@ export default function BookScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const GREEN = '#066a46';
+const GREEN = '#1e3c6e';
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#f8f9fb' },
@@ -464,6 +463,8 @@ const s = StyleSheet.create({
     backgroundColor: '#fafafa',
   },
   fieldIcon: { marginRight: 10 },
+  dialCode: { paddingHorizontal: 10, fontSize: 15, fontWeight: '700', color: '#0a0f1c' },
+  dialDiv: { width: 1, height: 28, backgroundColor: '#e2e8f0' },
   fieldInput: { flex: 1, fontSize: 15, color: '#000' },
   submitBtn: {
     backgroundColor: GREEN,

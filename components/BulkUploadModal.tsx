@@ -28,7 +28,7 @@ interface CreateResult {
 
 type Step = 'upload' | 'preview' | 'creating' | 'done';
 
-const GREEN = '#066a46';
+const GREEN = '#1e3c6e';
 const RED   = '#ef4444';
 
 // ─── CSV template string shown to the user ────────────────────────────────────

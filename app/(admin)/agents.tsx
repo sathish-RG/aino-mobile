@@ -23,9 +23,9 @@ type Tab = 'agents' | 'owners';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const GREEN  = '#066a46';
-const TEAL   = '#0891b2';
-const ORANGE = '#ea580c';
+const GREEN  = '#1e3c6e';
+const TEAL   = '#1e3c6e' // navy;
+const ORANGE = '#7a2030' // maroon;
 const AMBER  = '#f59e0b';
 const RED    = '#ef4444';
 

@@ -8,7 +8,7 @@ import api from '@/src/api/client';
 interface Lead { id: string; customer_name: string | null; first_click_at: string | null }
 interface Commission { id: string; amount: number; status: 'Unpaid' | 'Paid' }
 
-const GREEN = '#066a46';
+const GREEN = '#1e3c6e';
 const AMBER = '#f59e0b';
 const BLUE = '#3b82f6';
 const EMERALD = '#10b981';
@@ -123,7 +123,7 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#f5f7fa' },
   scroll: { paddingBottom: 40 },
   banner: {
-    backgroundColor: '#0284c7',
+    backgroundColor: '#1e3c6e',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

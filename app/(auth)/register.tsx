@@ -22,7 +22,7 @@ import { setConfirmation } from '@/src/lib/phoneAuth';
 
 type Role = 'Agent' | 'Owner';
 
-const GREEN = '#066a46';
+const GREEN = '#1e3c6e';
 
 const ROLE_CONFIG: Record<Role, { icon: React.ComponentProps<typeof Feather>['name']; desc: string }> = {
   Agent: { icon: 'briefcase', desc: 'List & manage properties' },
@@ -42,17 +42,16 @@ export default function RegisterScreen() {
   const handleSendOtp = async () => {
     if (!name.trim()) return Alert.alert('Required', 'Full name is required.');
     if (!phone.trim()) return Alert.alert('Required', 'Phone number is required.');
-    if (!phone.trim().startsWith('+'))
-      return Alert.alert('Invalid format', 'Include country code, e.g. +91XXXXXXXXXX');
+    const fullPhone = '+91' + phone.trim();
     try {
       setLoading(true);
       const result = await firebase
         .auth()
-        .signInWithPhoneNumber(phone.trim(), recaptchaVerifier.current!);
+        .signInWithPhoneNumber(fullPhone, recaptchaVerifier.current!);
       setConfirmation(result);
       router.push({
         pathname: '/(auth)/otp' as any,
-        params: { phone: phone.trim(), name: name.trim(), email: email.trim(), role, mode: 'register' },
+        params: { phone: fullPhone, name: name.trim(), email: email.trim(), role, mode: 'register' },
       });
     } catch (err: any) {
       Alert.alert('Failed', err.message ?? 'Could not send OTP. Try again.');
@@ -103,13 +102,14 @@ export default function RegisterScreen() {
             <InputField
               label="PHONE NUMBER"
               icon="phone"
-              placeholder="+91 XXXXX XXXXX"
+              placeholder="XXXXX XXXXX"
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={(v) => setPhone(v.replace(/\D/g, '').slice(0, 10))}
               keyboardType="phone-pad"
               focused={focusedField === 'phone'}
               onFocus={() => setFocusedField('phone')}
               onBlur={() => setFocusedField(null)}
+              dialPrefix="+91"
             />
             <InputField
               label="EMAIL (optional)"
@@ -197,6 +197,7 @@ function InputField({
   focused,
   onFocus,
   onBlur,
+  dialPrefix,
 }: {
   label: string;
   icon: React.ComponentProps<typeof Feather>['name'];
@@ -209,6 +210,7 @@ function InputField({
   focused: boolean;
   onFocus: () => void;
   onBlur: () => void;
+  dialPrefix?: string;
 }) {
   return (
     <View style={s.fieldGroup}>
@@ -217,6 +219,12 @@ function InputField({
         <View style={s.inputIcon}>
           <Feather name={icon} size={16} color={focused ? GREEN : '#94a3b8'} />
         </View>
+        {dialPrefix ? (
+          <>
+            <Text style={s.dialCode}>{dialPrefix}</Text>
+            <View style={s.dialDiv} />
+          </>
+        ) : null}
         <TextInput
           style={s.input}
           placeholder={placeholder}
@@ -282,6 +290,8 @@ const s = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: '#e2e8f0',
   },
+  dialCode: { paddingHorizontal: 10, fontSize: 15, fontWeight: '700', color: '#0a0f1c' },
+  dialDiv: { width: 1, height: 28, backgroundColor: '#e2e8f0' },
   input: { flex: 1, paddingHorizontal: 14, fontSize: 15, color: '#0a0f1c', fontWeight: '500' },
   roleRow: { flexDirection: 'row', gap: 12, marginBottom: 28 },
   roleCard: {

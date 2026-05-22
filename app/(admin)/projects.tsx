@@ -20,6 +20,7 @@ import { Feather } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/src/api/client';
 import BulkUploadModal from '@/components/BulkUploadModal';
+import * as DocumentPicker from 'expo-document-picker';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -34,7 +35,10 @@ interface Unit {
   id: string; unit_number: string; sq_ft: number; price: number;
   facing: string | null; status: UnitStatus;
 }
-interface ProjectDetail extends Project { units: Unit[] }
+interface ProjectDoc {
+  name: string; url: string; type: 'pdf' | 'image'; uploadedAt: string;
+}
+interface ProjectDetail extends Project { units: Unit[]; documents: ProjectDoc[] }
 
 interface CreateForm {
   project_name: string; project_type: string; location: string; rera_number: string; owner_id: string;
@@ -56,7 +60,7 @@ type ScreenView = 'list' | 'detail' | 'create' | 'add-unit';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const GREEN = '#066a46';
+const GREEN = '#1e3c6e';
 const FACING_OPTIONS = ['East', 'West', 'North', 'South', 'NE', 'NW', 'SE', 'SW'];
 const ROAD_TYPES = ['Tar', 'Cement', 'WBM', 'Gravel', 'Mud'];
 const DIM_FORMATS = ['Feet', 'Meters', 'Yards'];
@@ -376,6 +380,39 @@ export default function AdminProjectsScreen() {
     },
     onError: (err: any) => Alert.alert('Error', err.response?.data?.message ?? 'Could not add unit.'),
   });
+
+  const uploadDocMutation = useMutation({
+    mutationFn: ({ uri, name, mimeType }: { uri: string; name: string; mimeType: string }) => {
+      const form = new FormData();
+      form.append('file', { uri, name, type: mimeType } as any);
+      form.append('name', name);
+      return api.post(`/projects/${selectedId}/documents`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-project', selectedId] }),
+    onError: (err: any) => Alert.alert('Upload Failed', err.response?.data?.message ?? 'Could not upload document.'),
+  });
+
+  const deleteDocMutation = useMutation({
+    mutationFn: (index: number) => api.delete(`/projects/${selectedId}/documents/${index}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-project', selectedId] }),
+    onError: (err: any) => Alert.alert('Error', err.response?.data?.message ?? 'Could not delete document.'),
+  });
+
+  const handlePickDocument = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['image/*', 'application/pdf'],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const file = result.assets[0];
+    uploadDocMutation.mutate({
+      uri: file.uri,
+      name: file.name,
+      mimeType: file.mimeType ?? 'application/octet-stream',
+    });
+  };
 
   const handleAddUnit = () => {
     if (!unitForm.unit_number.trim()) return Alert.alert('Required', 'Plot number is required.');
@@ -794,6 +831,64 @@ export default function AdminProjectsScreen() {
                   </TouchableOpacity>
                 </View>
               }
+              ListFooterComponent={
+                <View style={s.docsSection}>
+                  <View style={s.docsSectionHeader}>
+                    <Text style={s.docsSectionTitle}>DOCUMENTS</Text>
+                    <TouchableOpacity
+                      style={[s.addDocBtn, uploadDocMutation.isPending && s.btnDisabled]}
+                      onPress={handlePickDocument}
+                      disabled={uploadDocMutation.isPending}
+                      activeOpacity={0.8}
+                    >
+                      {uploadDocMutation.isPending ? (
+                        <ActivityIndicator size="small" color={GREEN} />
+                      ) : (
+                        <>
+                          <Feather name="upload" size={14} color={GREEN} />
+                          <Text style={s.addDocBtnText}>Upload</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+
+                  {(project.documents ?? []).length === 0 ? (
+                    <View style={s.docsEmpty}>
+                      <Feather name="file" size={28} color="#cbd5e1" />
+                      <Text style={s.docsEmptyText}>No documents uploaded yet</Text>
+                    </View>
+                  ) : (
+                    (project.documents ?? []).map((doc, i) => (
+                      <View key={i} style={s.docRow}>
+                        <View style={[s.docIcon, doc.type === 'pdf' ? s.docIconPdf : s.docIconImg]}>
+                          <Feather
+                            name={doc.type === 'pdf' ? 'file-text' : 'image'}
+                            size={18}
+                            color={doc.type === 'pdf' ? '#ef4444' : '#3b82f6'}
+                          />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={s.docName} numberOfLines={1}>{doc.name}</Text>
+                          <Text style={s.docDate}>
+                            {new Date(doc.uploadedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          style={s.docDeleteBtn}
+                          onPress={() =>
+                            Alert.alert('Delete Document', `Remove "${doc.name}"?`, [
+                              { text: 'Cancel', style: 'cancel' },
+                              { text: 'Delete', style: 'destructive', onPress: () => deleteDocMutation.mutate(i) },
+                            ])
+                          }
+                        >
+                          <Feather name="trash-2" size={16} color="#ef4444" />
+                        </TouchableOpacity>
+                      </View>
+                    ))
+                  )}
+                </View>
+              }
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[s.unitCard, { borderColor: STATUS_COLOR[item.status], backgroundColor: STATUS_BG[item.status] }]}
@@ -1081,7 +1176,7 @@ const s = StyleSheet.create({
   fab: {
     position: 'absolute', right: 24, width: 56, height: 56, borderRadius: 28,
     backgroundColor: GREEN, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#066a46', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10, elevation: 8,
+    shadowColor: '#1e3c6e', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10, elevation: 8,
   },
   statusBar: {
     flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 12,
@@ -1131,4 +1226,46 @@ const s = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.55 },
   submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+
+  // ── Documents section ──
+  docsSection: {
+    marginHorizontal: 12, marginTop: 8, marginBottom: 24,
+    backgroundColor: '#fff', borderRadius: 18,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    overflow: 'hidden',
+  },
+  docsSectionHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
+  },
+  docsSectionTitle: { fontSize: 11, fontWeight: '800', color: '#0a0f1c', letterSpacing: 0.8 },
+  addDocBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
+    borderWidth: 1.5, borderColor: GREEN,
+  },
+  addDocBtnText: { fontSize: 12, fontWeight: '700', color: GREEN },
+  docsEmpty: {
+    alignItems: 'center', paddingVertical: 28, gap: 8,
+  },
+  docsEmptyText: { fontSize: 13, color: '#94a3b8' },
+  docRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingHorizontal: 16, paddingVertical: 13,
+    borderBottomWidth: 1, borderBottomColor: '#f8fafc',
+  },
+  docIcon: {
+    width: 40, height: 40, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  docIconPdf: { backgroundColor: '#fef2f2' },
+  docIconImg: { backgroundColor: '#eff6ff' },
+  docName: { fontSize: 14, fontWeight: '600', color: '#0a0f1c', marginBottom: 2 },
+  docDate: { fontSize: 11, color: '#94a3b8' },
+  docDeleteBtn: {
+    width: 34, height: 34, borderRadius: 10,
+    backgroundColor: '#fef2f2', alignItems: 'center', justifyContent: 'center',
+  },
 });

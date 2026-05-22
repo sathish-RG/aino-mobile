@@ -28,7 +28,7 @@ interface Booking {
   agent: { id: string; name: string; phone: string };
 }
 
-const GREEN = '#066a46';
+const GREEN = '#1e3c6e';
 const ORANGE = '#ea580c';
 const RED = '#ef4444';
 

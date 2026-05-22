@@ -24,8 +24,8 @@ interface Lead {
   project: { id: string; project_name: string; location: string };
 }
 
-const GREEN = '#066a46';
-const BLUE = '#0284c7';
+const GREEN = '#1e3c6e';
+const BLUE = '#1e3c6e';
 
 function shareUrl(token: string) {
   return ExpoLinking.createURL(`/book/${token}`);
@@ -232,7 +232,7 @@ const s = StyleSheet.create({
   location: { fontSize: 11, color: '#94a3b8', flex: 1 },
   openedBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, backgroundColor: '#edfaf4',
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, backgroundColor: '#e8eef8',
   },
   openedDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: GREEN },
   openedText: { fontSize: 11, color: GREEN, fontWeight: '700' },
@@ -255,7 +255,7 @@ const s = StyleSheet.create({
     gap: 5, paddingVertical: 10, borderRadius: 12,
     borderWidth: 1.5, borderColor: '#e2e8f0', backgroundColor: '#f8fafc',
   },
-  actionBtnCopied: { borderColor: GREEN, backgroundColor: '#edfaf4' },
+  actionBtnCopied: { borderColor: GREEN, backgroundColor: '#e8eef8' },
   actionBtnText: { fontSize: 12, fontWeight: '600', color: '#64748b' },
   shareBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

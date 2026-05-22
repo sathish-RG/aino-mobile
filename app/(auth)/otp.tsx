@@ -24,7 +24,7 @@ import type { AuthUser } from '@/src/stores/useAuthStore';
 import { getConfirmation, setConfirmation, clearConfirmation } from '@/src/lib/phoneAuth';
 
 const DIGIT_COUNT = 6;
-const GREEN = '#066a46';
+const GREEN = '#1e3c6e';
 
 export default function OtpScreen() {
   const { phone, name, email, role, mode } = useLocalSearchParams<{

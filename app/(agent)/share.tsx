@@ -36,8 +36,8 @@ interface GeneratedLink {
   shareUrl: string;
 }
 
-const GREEN = '#066a46';
-const BLUE = '#0284c7';
+const GREEN = '#1e3c6e';
+const BLUE = '#1e3c6e';
 
 export default function ShareScreen() {
   const insets = useSafeAreaInsets();
@@ -70,9 +70,10 @@ export default function ShareScreen() {
   const handleGenerate = async () => {
     if (!selectedProject) return;
     const name = clientName.trim();
-    const phone = clientPhone.trim();
+    const digits = clientPhone.trim();
     if (!name) return Alert.alert('Required', 'Please enter the client name.');
-    if (!phone || phone.length < 6) return Alert.alert('Required', 'Please enter a valid client phone number.');
+    if (!digits || digits.length < 10) return Alert.alert('Required', 'Please enter a valid 10-digit phone number.');
+    const phone = '+91' + digits;
 
     setGenerating(true);
     try {
@@ -210,12 +211,14 @@ export default function ShareScreen() {
                 <Text style={s.label}>CLIENT MOBILE</Text>
                 <View style={s.inputRow}>
                   <Feather name="phone" size={15} color="#94a3b8" style={s.inputIcon} />
+                  <Text style={s.dialCode}>+91</Text>
+                  <View style={s.dialDiv} />
                   <TextInput
                     style={s.input}
-                    placeholder="e.g. 9876543210"
+                    placeholder="XXXXX XXXXX"
                     placeholderTextColor="#94a3b8"
                     value={clientPhone}
-                    onChangeText={setClientPhone}
+                    onChangeText={(v) => setClientPhone(v.replace(/\D/g, '').slice(0, 10))}
                     keyboardType="phone-pad"
                     returnKeyType="done"
                     onSubmitEditing={handleGenerate}
@@ -359,6 +362,8 @@ const s = StyleSheet.create({
     backgroundColor: '#f8fafc', height: 52, overflow: 'hidden',
   },
   inputIcon: { paddingHorizontal: 14 },
+  dialCode: { paddingHorizontal: 10, fontSize: 15, fontWeight: '700', color: '#0a0f1c' },
+  dialDiv: { width: 1, height: 28, backgroundColor: '#e2e8f0' },
   input: { flex: 1, fontSize: 15, color: '#0a0f1c', fontWeight: '500', paddingRight: 14 },
   generateBtn: {
     width: '100%', backgroundColor: BLUE, flexDirection: 'row', alignItems: 'center',
@@ -384,7 +389,7 @@ const s = StyleSheet.create({
     gap: 6, paddingVertical: 14, borderRadius: 12,
     backgroundColor: '#f1f5f9', borderWidth: 1.5, borderColor: '#e2e8f0',
   },
-  copyBtnDone: { backgroundColor: '#edfaf4', borderColor: GREEN },
+  copyBtnDone: { backgroundColor: '#e8eef8', borderColor: GREEN },
   copyBtnText: { color: '#0a0f1c', fontSize: 14, fontWeight: '700' },
   shareActionBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
