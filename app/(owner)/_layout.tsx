@@ -1,14 +1,12 @@
 import { Tabs } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
-const GREEN = '#1e3c6e';
-
 export default function OwnerLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: GREEN,
+        tabBarActiveTintColor: '#1A2744',
         tabBarInactiveTintColor: '#8a95a5',
         tabBarStyle: { borderTopColor: '#f0f0f0' },
         tabBarLabelStyle: { fontSize: 11 },
@@ -42,6 +40,7 @@ export default function OwnerLayout() {
           tabBarIcon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
         }}
       />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
     </Tabs>
   );
 }

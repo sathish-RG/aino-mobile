@@ -218,7 +218,7 @@ export default function OtpScreen() {
 
             <TouchableOpacity style={s.resendRow} onPress={handleResend} disabled={loading}>
               <Text style={s.resendText}>
-                Didn't receive it?{'  '}
+                Didn&#39;t receive it?{'  '}
                 <Text style={s.resendLink}>Resend code</Text>
               </Text>
             </TouchableOpacity>
